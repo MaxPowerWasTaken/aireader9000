@@ -1,0 +1,24 @@
+[project]
+name = "aireader9000"
+version = "0.1.0"
+description = "Upload a PDF or collection of PDFs to ask questions and get answers which always highlight direct quotes from the source doc"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "pymupdf>=1.25.0",
+    "streamlit>=1.40.2",
+]
+
+[tool.ruff]  
+# these rules are enforced; will fail pre-commit when violated.
+# I have a second ruff run in precommit config for other rules to just warn on 
+line-length = 88
+lint.select = ["E", "F", "I"]
+fix = true
+
+[tool.mypy]
+files = "app.py"
+ignore_missing_imports = true
+disallow_untyped_calls = true
+disallow_untyped_definitions = true
+strict = true
