@@ -1,17 +1,17 @@
 repos:
+  # Linting with ruff; this will run ruff as configured in pyproject.toml. Fail on violations.
   - repo: https://github.com/charliermarsh/ruff-pre-commit
     rev: v0.8.2  # latest stable version as of 12/8/2024
     hooks:
-      # this will run ruff as configured in pyproject.toml
       - id: ruff
         args: ["--verbose"]
         language_version: python3
 
+    # this is a second ruff pass, --isolated to ignore pyproject.toml, w/ other rules 
+    # (Performance, Bestpractices) I want to warn but not fail on violations of 
   - repo: https://github.com/charliermarsh/ruff-pre-commit
     rev: v0.8.2  # latest stable version as of 12/8/2024
     hooks:
-      # this is a second ruff pass, --isolated to ignore pyproject.toml, w/ other rules 
-      # (Performance, Bestpractices) I want to warn but not fail on violations of 
       - id: ruff
         language_version: python3
         args:
@@ -22,6 +22,7 @@ repos:
           - --severity
           - warning
 
+  # Static type checking with mypy
   - repo: https://github.com/pre-commit/mirrors-mypy
     rev: v1.13.0  # latest stable version as of 12/8/2024
     hooks:
@@ -30,3 +31,14 @@ repos:
           - --disable-error-code
           - attr-defined
         language_version: python3
+
+  # Run our tests with pytest
+  - repo: local
+    hooks:
+      - id: pytest-check
+        name: pytest-check
+        entry: uv run pytest
+        language: system
+        pass_filenames: false
+        always_run: true
+        types: [python]

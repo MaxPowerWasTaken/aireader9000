@@ -1,0 +1,76 @@
+name: CI/CD
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    - cron: '0 0 * * *'
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.13.1'
+        
+    - name: Install uv
+      run: |
+        curl -LsSf https://astral.sh/uv/install.sh | sh
+        echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+        
+    - name: Install dependencies
+      run: |
+        uv pip install ruff mypy
+
+    - name: Run Ruff
+      run: |
+        uv run ruff check . \
+          --verbose \
+          --config-file pyproject.toml
+
+    - name: Run MyPy
+      run: |
+        uv run mypy app.py \
+          --config-file pyproject.toml \
+          --disable-error-code attr-defined
+
+  health_check:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.13.1'
+        
+    - name: Install uv
+      run: |
+        curl -LsSf https://astral.sh/uv/install.sh | sh
+        echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+        
+    - name: Install dependencies
+      run: |
+        uv pip install requests
+    
+    - name: Run health check
+      run: |
+        python tests/health_check.py
+    
+    - name: Create issue if site is down
+      if: ${{ failure() }}
+      uses: actions/github-script@v7
+      with:
+        script: |
+          github.rest.issues.create({
+            owner: context.repo.owner,
+            repo: context.repo.name,
+            title: '🚨 Site is down!',
+            body: 'The health check for https://aireader9000.streamlit.app/ has failed.'
+          })

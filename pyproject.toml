@@ -22,3 +22,7 @@ ignore_missing_imports = true
 disallow_untyped_calls = true
 disallow_untyped_definitions = true
 strict = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py", "*_test.py", "health_check.py"]
