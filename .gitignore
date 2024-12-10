@@ -9,6 +9,9 @@ wheels/
 # Virtual environments
 .venv
 
+# secrets
+.streamlit/secrets.toml
+
 # my own nonsense
 notes.md
 scratch.py

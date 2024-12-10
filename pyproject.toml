@@ -3,11 +3,18 @@ name = "aireader9000"
 version = "0.1.0"
 description = "Upload a PDF or collection of PDFs to ask questions and get answers which always highlight direct quotes from the source doc"
 readme = "README.md"
-requires-python = ">=3.12"
+requires-python = ">=3.12.0, <3.13.0"  # 'uv add torch' failed on my m4 w/ py 3.13.1 but worked with 3.12.8. ht: https://simonwillison.net/2024/Nov/28/
 dependencies = [
+    "lancedb==0.16.0",  # as pf 12/10/2024 0.17 throws: "'RemoteTable' object has no attribute '_loop'" for this code, which works on 0.15 & 0.16
     "pymupdf>=1.25.0",
     "streamlit>=1.40.2",
+    "torch>=2.5.1",
+    # apple-silicon-specific acceleration installed just on macos arm (m-chip) machines
+    'mlx; platform_system == "Darwin" and platform_machine == "arm64"',
+    "sentence-transformers>=3.3.1",
+    "stqdm>=0.0.5",
 ]
+
 
 [tool.ruff]  
 # these rules are enforced; will fail pre-commit when violated.
