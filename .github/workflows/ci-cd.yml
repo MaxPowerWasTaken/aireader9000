@@ -10,7 +10,7 @@ on:
 
 jobs:
   setup:
-    name: Setup Python and uv venv
+    name: Setup Python and UV Venv
     runs-on: ubuntu-latest
     steps:
     - name: Checkout repository
@@ -29,13 +29,16 @@ jobs:
 
     - name: Install shared dependencies
       run: |
+        source .venv/bin/activate
         uv pip install ruff mypy requests
 
-    - name: save .venv as artifact for successive ci/cd jobs/steps
+    - name: Save venv as artifact
       uses: actions/upload-artifact@v3
       with:
-        name: venv
-        path: .venv
+        name: python-venv
+        path: .venv/
+        retention-days: 1
+        if-no-files-found: error
 
   lint:
     name: Lint Code
@@ -48,24 +51,27 @@ jobs:
     - name: Download venv
       uses: actions/download-artifact@v3
       with:
-        name: venv
+        name: python-venv
         path: .venv
 
-    - name: run Ruff from venv
+    - name: Make venv executable
+      run: chmod -R 755 .venv/bin
+
+    - name: Run Ruff
       run: |
         source .venv/bin/activate
         uv run ruff check . \
           --verbose \
           --config pyproject.toml
 
-    - name: Run MyPy from venv
+    - name: Run MyPy
       run: |
         source .venv/bin/activate
         uv run mypy app.py \
           --config pyproject.toml \
           --disable-error-code attr-defined
 
-  integration_tests:
+  health_check:
     name: Health Check
     needs: setup
     runs-on: ubuntu-latest
@@ -76,10 +82,13 @@ jobs:
     - name: Download venv
       uses: actions/download-artifact@v3
       with:
-        name: venv
+        name: python-venv
         path: .venv
 
-    - name: Run health check from venv
+    - name: Make venv executable
+      run: chmod -R 755 .venv/bin
+
+    - name: Run health check
       run: |
         source .venv/bin/activate
         python tests/health_check.py
