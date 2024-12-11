@@ -1,0 +1,32 @@
+name: 'Setup Python Environment'
+description: 'Sets up Python, UV, and creates a venv with dependencies'
+inputs:
+  python-version:
+    description: 'Python version to use'
+    required: false
+    default: '3.12'
+  dependencies:
+    description: 'Space-separated list of dependencies to install'
+    required: false
+    default: ''
+
+runs:
+  using: "composite"
+  steps:
+    - name: Install uv
+      uses: astral-sh/setup-uv@v4
+      with:
+        python-version: ${{ inputs.python-version }}
+        enable-cache: true
+        cache-dependency-glob: |
+          **/pyproject.toml
+          **/uv.lock
+
+    - name: Create and activate venv, install deps
+      shell: bash
+      run: |
+        uv venv
+        source .venv/bin/activate
+        if [ ! -z "${{ inputs.dependencies }}" ]; then
+          uv pip install ${{ inputs.dependencies }}
+        fi
