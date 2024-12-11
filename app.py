@@ -1,10 +1,10 @@
 import pymupdf as fitz
 import streamlit as st
 
-from config import ldb_conn
 from index_docs import index_doc_to_cloud_db
 
-def main():
+
+def main()->None:
     st.title("Welcome to AI Reader 9000")
     
     uploaded_file = st.file_uploader("Upload Document", type="pdf")

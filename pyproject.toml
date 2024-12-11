@@ -19,15 +19,15 @@ dependencies = [
 [tool.ruff]  
 # these rules are enforced; will fail pre-commit when violated.
 # I have a second ruff run in precommit config for other rules to just warn on 
-line-length = 88
+line-length = 100
 lint.select = ["E", "F", "I"]
 fix = true
 
 [tool.mypy]
-files = "app.py"
+files = "*.py"  # all .py files in this top-level dir
 ignore_missing_imports = true
 disallow_untyped_calls = true
-disallow_untyped_definitions = true
+disallow_untyped_defs = true
 strict = true
 
 [tool.pytest.ini_options]

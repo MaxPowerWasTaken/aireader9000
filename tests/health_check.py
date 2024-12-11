@@ -1,7 +1,9 @@
 # tests/health_check.py
 import sys
-import requests
 from typing import Optional
+
+import requests
+
 
 def check_site_health(url: str, connect_timeout: int = 10, read_timeout: int = 30) -> Optional[str]:
     """

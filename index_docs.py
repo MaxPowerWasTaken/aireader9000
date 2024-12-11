@@ -1,12 +1,11 @@
-import lancedb
+from typing import Literal, Union
+
 import pymupdf as fitz
 import streamlit as st
 
-from typing import Literal, List, Union
-from schemas import DocumentChunk, DocumentChunkLanceRecord
-from stqdm import stqdm
-
 from config import ldb_conn
+from schemas import DocumentChunk, DocumentChunkLanceRecord
+
 
 def clean_name(model_name:str)->str:
     return model_name.replace('/', '_').replace('-', '_').replace('.', '_')
@@ -21,17 +20,19 @@ def index_doc_to_cloud_db(pdf_document:fitz.Document,
 
         # Chunk up document by page (Each chunk must always map to a particular page number)
         chunks = []
-        st.write(f"Parsing/chunking document...")
+        st.write("Parsing/chunking document...")
         try:
             #for page in stqdm(list(pdf_document.pages())):
             for page in list(pdf_document.pages()):
                 if embed_by == "page_text":
                     if chunk_strategy == "whole_page":
-                        chunks.append(DocumentChunk(text=page.get_text(), doc_name=doc_title, pg_num_0idx=page.number))
+                        chunks.append(DocumentChunk(text=page.get_text(), 
+                                                    doc_name=doc_title, 
+                                                    pg_num_0idx=page.number))
                     else:
-                        raise NotImplementedError(f"only 'whole_page' chunking strategy is implemented")
+                        raise NotImplementedError(f"{chunk_strategy} chunk strat not implemented")
                 else:
-                    raise NotImplementedError(f"only 'page_text' embedding strategy is implemented")
+                    raise NotImplementedError("only 'page_text' embedding strategy is implemented")
         except Exception as e:
             st.error(f"Error parsing/chunking document on page {page}: {e}")
             return None
@@ -41,7 +42,7 @@ def index_doc_to_cloud_db(pdf_document:fitz.Document,
         if table_name in ldb_conn.table_names():
             ldb_conn.drop_table(table_name)
 
-        st.write(f"Writing document to cloud db (may take a few minutes to generate vector embeddings)")
+        st.write("Writing doc chunks to db (may take a few mins to generate vector embeddings)")
         tbl = ldb_conn.create_table(table_name, schema=DocumentChunkLanceRecord)
         tbl.add(chunks)
         tbl.create_fts_index("text", replace=True)
