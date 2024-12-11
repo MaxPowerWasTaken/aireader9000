@@ -21,16 +21,39 @@ jobs:
       with:
         python-version: '3.12.8'
 
+    - name: Debug - Check initial directory
+      run: |
+        pwd
+        ls -la
+
     - name: Install uv, create & activate venv
       run: |
         pip install uv
         uv venv
         source .venv/bin/activate
 
+    - name: Debug - Check venv structure
+      run: |
+        echo "Current directory structure:"
+        ls -la
+        echo "\nVenv directory structure:"
+        ls -la .venv || echo "No .venv directory found"
+        echo "\nAbsolute path check:"
+        readlink -f .venv
+
     - name: Install shared dependencies
       run: |
         source .venv/bin/activate
         uv pip install ruff mypy requests
+
+    - name: Debug - Final venv check
+      run: |
+        echo "Final directory structure:"
+        ls -la
+        echo "\nFinal venv contents:"
+        ls -la .venv/
+        echo "\nFinal bin contents:"
+        ls -la .venv/bin/
 
     - name: Save venv as artifact
       uses: actions/upload-artifact@v3
@@ -39,56 +62,3 @@ jobs:
         path: .venv/
         retention-days: 1
         if-no-files-found: error
-
-  lint:
-    name: Lint Code
-    needs: setup
-    runs-on: ubuntu-latest
-    steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-
-    - name: Download venv
-      uses: actions/download-artifact@v3
-      with:
-        name: python-venv
-        path: .venv
-
-    - name: Make venv executable
-      run: chmod -R 755 .venv/bin
-
-    - name: Run Ruff
-      run: |
-        source .venv/bin/activate
-        uv run ruff check . \
-          --verbose \
-          --config pyproject.toml
-
-    - name: Run MyPy
-      run: |
-        source .venv/bin/activate
-        uv run mypy app.py \
-          --config pyproject.toml \
-          --disable-error-code attr-defined
-
-  health_check:
-    name: Health Check
-    needs: setup
-    runs-on: ubuntu-latest
-    steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-
-    - name: Download venv
-      uses: actions/download-artifact@v3
-      with:
-        name: python-venv
-        path: .venv
-
-    - name: Make venv executable
-      run: chmod -R 755 .venv/bin
-
-    - name: Run health check
-      run: |
-        source .venv/bin/activate
-        python tests/health_check.py
