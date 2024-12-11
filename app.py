@@ -1,6 +1,7 @@
 import pymupdf as fitz
 import streamlit as st
 
+from config import ts
 from index_docs import index_doc_to_cloud_db
 
 
@@ -15,7 +16,7 @@ def main()->None:
             # proceed after doc_name is set
             if doc_name:
                 index_doc_to_cloud_db(pdf_document, doc_title=doc_name)
-                st.write(f"Successfully indexed document: {doc_name}")
+                st.write(f"{ts()} Successfully indexed document: {doc_name}")
 
         except Exception as e:
             st.error(e)
