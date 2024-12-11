@@ -5,9 +5,14 @@ from zoneinfo import ZoneInfo
 import pymupdf as fitz
 import streamlit as st
 
-from config import ldb_conn, ts
+from config import ldb_conn
 from schemas import DocumentChunk, DocumentChunkLanceRecord
 
+# timestamping util function
+def ts()->str:
+    return datetime.now(tz=ZoneInfo('America/Chicago')).strftime('%I:%M:%S %p')
+
+# clean_name util function to create names suitable for db tablenames
 def clean_name(model_name:str)->str:
     return model_name.replace('/', '_').replace('-', '_').replace('.', '_')
 
