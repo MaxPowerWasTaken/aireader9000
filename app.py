@@ -1,9 +1,14 @@
 import pymupdf as fitz
 import streamlit as st
 
-from config import ts
+from datetime import datetime
+from zoneinfo import ZoneInfo
+
 from index_docs import index_doc_to_cloud_db
 
+# timestamping util function
+def ts()->str:
+    return datetime.now(tz=ZoneInfo('America/Chicago')).strftime('%I:%M:%S %p')
 
 def main()->None:
     st.title("Welcome to AI Reader 9000")

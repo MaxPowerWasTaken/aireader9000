@@ -1,15 +1,7 @@
-from datetime import datetime
-from zoneinfo import ZoneInfo
-
 import lancedb
 import streamlit as st
 import torch
 from lancedb.embeddings import get_registry
-
-# timestamping util function
-def ts()->str:
-    return datetime.now(tz=ZoneInfo('America/Chicago')).strftime('%I:%M:%S %p')
-
 
 EMBEDDER = ("sentence-transformers", "BAAI/bge-small-en-v1.5")
 TEXT_CLEANING_MODEL = "gemini/gemini-1.5-flash"
