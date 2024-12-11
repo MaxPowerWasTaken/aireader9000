@@ -10,55 +10,66 @@ on:
 
 jobs:
   setup:
-    name: Setup Python and UV Venv
+    name: Setup Environment
+    runs-on: ubuntu-latest
+    outputs:
+      uv-version: ${{ steps.setup-uv.outputs.uv-version }}
+      cache-hit: ${{ steps.setup-uv.outputs.cache-hit }}
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Install uv
+      id: setup-uv
+      uses: astral-sh/setup-uv@v4
+      with:
+        python-version: "3.12"
+        enable-cache: true
+        cache-dependency-glob: |
+          **/pyproject.toml
+          **/uv.lock
+
+    - name: Install shared dependencies
+      run: uv pip install ruff mypy requests
+
+  lint:
+    name: Lint Code
+    needs: setup
     runs-on: ubuntu-latest
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
 
-    - name: Set up Python
-      uses: actions/setup-python@v5
+    - name: Reuse uv setup
+      uses: astral-sh/setup-uv@v4
       with:
-        python-version: '3.12.8'
+        python-version: "3.12"
+        enable-cache: true
+        version: ${{ needs.setup.outputs.uv-version }}  # Ensures same version
+    
+    - name: Run Ruff
+      run: uv run ruff check . --verbose --config pyproject.toml
 
-    - name: Debug - Check initial directory
+    - name: Run MyPy
       run: |
-        pwd
-        ls -la
+        uv run mypy app.py \
+          --config pyproject.toml \
+          --disable-error-code attr-defined
 
-    - name: Install uv, create & activate venv
-      run: |
-        pip install uv
-        uv venv
-        source .venv/bin/activate
+  health_check:
+    name: Health Check
+    needs: setup
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
 
-    - name: Debug - Check venv structure
-      run: |
-        echo "Current directory structure:"
-        ls -la
-        echo "\nVenv directory structure:"
-        ls -la .venv || echo "No .venv directory found"
-        echo "\nAbsolute path check:"
-        readlink -f .venv
-
-    - name: Install shared dependencies
-      run: |
-        source .venv/bin/activate
-        uv pip install ruff mypy requests
-
-    - name: Debug - Final venv check
-      run: |
-        echo "Final directory structure:"
-        ls -la
-        echo "\nFinal venv contents:"
-        ls -la .venv/
-        echo "\nFinal bin contents:"
-        ls -la .venv/bin/
-
-    - name: Save venv as artifact
-      uses: actions/upload-artifact@v3
+    - name: Reuse uv setup
+      uses: astral-sh/setup-uv@v4
       with:
-        name: python-venv
-        path: .venv/
-        retention-days: 1
-        if-no-files-found: error
+        python-version: "3.12"
+        enable-cache: true
+        version: ${{ needs.setup.outputs.uv-version }}  # Ensures same version
+    
+    - name: Run health check
+      run: uv run python tests/health_check.py
