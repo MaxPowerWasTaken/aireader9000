@@ -9,43 +9,17 @@ on:
     - cron: '0 0 * * *'
 
 jobs:
-  setup:
-    name: Setup Environment
-    runs-on: ubuntu-latest
-    outputs:
-      uv-version: ${{ steps.setup-uv.outputs.uv-version }}
-      cache-hit: ${{ steps.setup-uv.outputs.cache-hit }}
-    steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-
-    - name: Install uv
-      id: setup-uv
-      uses: astral-sh/setup-uv@v4
-      with:
-        python-version: "3.12"
-        enable-cache: true
-        cache-dependency-glob: |
-          **/pyproject.toml
-          **/uv.lock
-
-    - name: Install shared dependencies
-      run: uv pip install ruff mypy requests
-
   lint:
     name: Lint Code
-    needs: setup
     runs-on: ubuntu-latest
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
 
-    - name: Reuse uv setup
-      uses: astral-sh/setup-uv@v4
+    - name: Setup environment
+      uses: ./.github/actions/setup-env
       with:
-        python-version: "3.12"
-        enable-cache: true
-        version: ${{ needs.setup.outputs.uv-version }}  # Ensures same version
+        dependencies: "ruff mypy"
     
     - name: Run Ruff
       run: uv run ruff check . --verbose --config pyproject.toml
@@ -56,20 +30,17 @@ jobs:
           --config pyproject.toml \
           --disable-error-code attr-defined
 
-  health_check:
+  integration_tests:
     name: Health Check
-    needs: setup
     runs-on: ubuntu-latest
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
 
-    - name: Reuse uv setup
-      uses: astral-sh/setup-uv@v4
+    - name: Setup environment
+      uses: ./.github/actions/setup-env
       with:
-        python-version: "3.12"
-        enable-cache: true
-        version: ${{ needs.setup.outputs.uv-version }}  # Ensures same version
+        dependencies: "requests"
     
     - name: Run health check
       run: uv run python tests/health_check.py
