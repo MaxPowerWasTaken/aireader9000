@@ -42,6 +42,7 @@ def index_doc_to_cloud_db(pdf_document:fitz.Document,
         # Write chunks to cloud document db
         t1 = datetime.now()
         st.write(f"parsed/chunked doc in {(t1 - t0).total_seconds():.1f} secs")
+        print(f"parsed/chunked doc in {(t1 - t0).total_seconds():.1f} secs")
         table_name = f"{clean_name(doc_title)}_by_{chunk_strategy}_{clean_name(embedding_model)}"
         if table_name in ldb_conn.table_names():
             ldb_conn.drop_table(table_name)
@@ -52,5 +53,6 @@ def index_doc_to_cloud_db(pdf_document:fitz.Document,
         tbl.create_fts_index("text", replace=True)
         t2 = datetime.now()
         st.write(f"vector embeddings, text index, wrote to db in: {(t2 - t1).total_seconds()} s")
+        print(f"vector embeddings, text index, wrote to db in: {(t2 - t1).total_seconds()} s")
         
         return None
