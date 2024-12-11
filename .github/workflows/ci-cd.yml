@@ -10,7 +10,7 @@ on:
 
 jobs:
   setup:
-    name: Setup Python and UV Venv
+    name: Setup Python and uv venv
     runs-on: ubuntu-latest
     steps:
     - name: Checkout repository
@@ -45,24 +45,27 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
 
-    - name: Download and activate venv
-      run: |
-        tar -xzf $(actions/download-artifact@v3 --artifact-name venv)
-        source .venv/bin/activate
+    - name: Download venv
+      uses: actions/download-artifact@v3
+      with:
+        name: venv
+        path: .venv
 
-    - name: Run Ruff
+    - name: run Ruff from venv
       run: |
+        source .venv/bin/activate
         uv run ruff check . \
           --verbose \
           --config pyproject.toml
 
-    - name: Run MyPy
+    - name: Run MyPy from venv
       run: |
+        source .venv/bin/activate
         uv run mypy app.py \
           --config pyproject.toml \
           --disable-error-code attr-defined
 
-  health_check:
+  integration_tests:
     name: Health Check
     needs: setup
     runs-on: ubuntu-latest
@@ -70,13 +73,13 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
 
-    - name: Download and activate venv
-      run: |
-        tar -xzf $(actions/download-artifact@v3 --artifact-name venv)
-        source .venv/bin/activate
+    - name: Download venv
+      uses: actions/download-artifact@v3
+      with:
+        name: venv
+        path: .venv
 
-    - name: Install additional dependencies
-      run: uv pip install requests
-    
-    - name: Run health check
-      run: python tests/health_check.py
+    - name: Run health check from venv
+      run: |
+        source .venv/bin/activate
+        python tests/health_check.py
