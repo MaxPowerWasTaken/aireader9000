@@ -25,7 +25,7 @@ def get_selected_rr(selected_reranker:str)->lancedb.rerankers.Reranker:
             raise ValueError(f"Unknown reranker type: {selected_reranker}")
 
 
-def get_most_relevant_chunks(tbl: lancedb.remote.table.RemoteTable,  #  type: ignore
+def get_most_relevant_chunks(tbl: lancedb.remote,  #  type: ignore
                    query: str, 
                    num_results_retrieved: int = N_RESULTS_RETRIEVED,
                    num_results_to_llm: int = N_TOP_RERANKED_RESULTS_TO_LLM,
