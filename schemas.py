@@ -1,5 +1,5 @@
+
 from lancedb.pydantic import LanceModel, Vector
-from typing import Any
 
 from config import embedding_model
 
@@ -15,6 +15,7 @@ class DocumentChunkLanceRecord(DocumentChunk):
        suitable embedding model & ndims"""
     vector: Vector(embedding_model.ndims()) = embedding_model.VectorField()  # type: ignore
 
-class RetrievedDocumentChunk(DocumentChunkLanceRecord):
+class RetrievedDocChunk(DocumentChunkLanceRecord):
     relevance_score: float  # rename from _relevance_score to relevance_score
                             # to avoid certain 'magic' on handling of leading underscore attribs
+
