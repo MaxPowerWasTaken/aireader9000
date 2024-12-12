@@ -1,15 +1,15 @@
 import lancedb
-from lancedb.rerankers import (
-    CohereReranker,
-    ColbertReranker,
-    CrossEncoderReranker,
-    LinearCombinationReranker,
-)
 import lancedb.rerankers
-from pydantic import BaseModel
+from lancedb.rerankers import (
+   CohereReranker,
+   ColbertReranker,
+   CrossEncoderReranker,
+   LinearCombinationReranker,
+)
 
-from config import COHERE_API_KEY, N_RESULTS_RETRIEVED, N_TOP_RERANKED_RESULTS_TO_LLM
+from config import N_RESULTS_RETRIEVED, N_TOP_RERANKED_RESULTS_TO_LLM
 from schemas import RetrievedDocChunk
+
 
 def get_selected_rr(selected_reranker:str)->lancedb.rerankers.Reranker:
    match selected_reranker:
