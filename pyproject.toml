@@ -5,7 +5,7 @@ description = "Upload a PDF or collection of PDFs to ask questions and get answe
 readme = "README.md"
 requires-python = ">=3.12.0, <3.13.0"  # 'uv add torch' failed on my m4 w/ py 3.13.1 but worked with 3.12.8. ht: https://simonwillison.net/2024/Nov/28/
 dependencies = [
-    "lancedb==0.16.0",  # as pf 12/10/2024 0.17 throws: "'RemoteTable' object has no attribute '_loop'" for this code, which works on 0.15 & 0.16
+    "lancedb==0.15.0", # as pf 12/10/2024 0.17 throws: "'RemoteTable' object has no attribute '_loop'" for this code, which works on 0.15 & 0.16
     "pymupdf>=1.25.0",
     "streamlit>=1.40.2",
     "torch>=2.5.1",
@@ -13,6 +13,8 @@ dependencies = [
     'mlx; platform_system == "Darwin" and platform_machine == "arm64"',
     "sentence-transformers>=3.3.1",
     "stqdm>=0.0.5",
+    "openai>=1.57.2",
+    "cohere>=5.13.3",
 ]
 
 
@@ -23,13 +25,18 @@ line-length = 100
 lint.select = ["E", "F", "I"]
 fix = true
 
-[tool.mypy]
-files = "*.py"  # all .py files in this top-level dir
-ignore_missing_imports = true
-disallow_untyped_calls = true
-disallow_untyped_defs = true
-strict = true
+[tool.pyright]
+typeCheckingMode = "basic"  # (basic = default)
+venvPath = "."  # docs recommend explicitly setting where your venv is, ...
+venv = ".venv"  # see https://github.com/RobertCraigie/pyright-python?tab=readme-ov-file#pre-commit
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 python_files = ["test_*.py", "*_test.py", "health_check.py"]
+
+[dependency-groups]
+dev = [
+    "pre-commit>=4.0.1",
+    "pyright[nodejs]",
+    "ruff>=0.8.3",
+]

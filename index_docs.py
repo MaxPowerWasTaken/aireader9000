@@ -8,6 +8,7 @@ import streamlit as st
 from config import ldb_conn
 from schemas import DocumentChunk, DocumentChunkLanceRecord
 
+
 # timestamping util function
 def ts()->str:
     return datetime.now(tz=ZoneInfo('America/Chicago')).strftime('%I:%M:%S %p')

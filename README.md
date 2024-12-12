@@ -4,14 +4,15 @@ This is the repo for the frontend code for AI Reader 9000, a RAG chatbot which a
 The frontend uses streamlit and is available online at aireader9000.streamlit.app
 
 # Development Guidelines
-## Virtual Environment Management
-This project uses `uv` for python project management, including the virtuaal environment (at .venv).
+## Setting up Dev Environment
+This project uses `uv` for python project management, including the virtual environment (at .venv).
 
-To crete a virtual environment, activate it, and install project dependencies, run the following commands:
+To crete the virtual environment, activate it, and install project dependencies from the `pyproject.toml` and `uv.lock` files in this repo, run the following commands:
 ```bash
 uv venv --python 3.13.1   
 source .venv/bin/activate
 uv sync
+uv run pre-commit install # one last 'manual' cmd still needed to install .git hooks
 ```
 
 If you want to add a required library to the project, you can add it manually to the dependencies in `pyproject.toml` and then run `uv sync` to install it, or alternatively you can run `uv add <package-name>` from your shell (which will install it and update the `prpoject.toml` file).

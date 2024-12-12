@@ -19,16 +19,13 @@ jobs:
     - name: Setup environment
       uses: ./.github/actions/setup-env
       with:
-        dependencies: "ruff mypy"
+        dependencies: "ruff 'pyright[nodejs]'"
     
-    - name: Run Ruff
+    - name: Run Ruff (Linter)
       run: uv run ruff check . --verbose --config pyproject.toml
 
-    - name: Run MyPy
-      run: |
-        uv run mypy app.py \
-          --config pyproject.toml \
-          --disable-error-code attr-defined
+    - name: Run Pyright (Type-Checker)
+      run: uv run pyright
 
   integration_tests:
     name: Health Check
