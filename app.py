@@ -65,13 +65,12 @@ def upload_view():
 def query_view():
     st.header("Query Mode")
 
+    # Document Collection to Query
+    db_tbl_names = list(ldb_conn.table_names())
+    collection_names = [tn.split("_by_")[0] for tn in db_tbl_names]
+
     # SIDEBAR OPTIONS
     with st.sidebar:
-        # Document Collection to Query
-        db_tbl_names = list(ldb_conn.table_names())
-        collection_names = [tn.split("_by_")[0] for tn in db_tbl_names]
-        collection = st.selectbox("Select a collection to query", options=collection_names)
-        db_tbl = [tn for tn in db_tbl_names if tn.startswith(collection)][0]
 
         # Input Number of Chunks Retrieved by 1st Stage; range: 5-15
         num_results_retrieved = st.number_input(label="Number of Chunks Retrieved (1st Stage)",
@@ -102,11 +101,12 @@ def query_view():
                                       min_value=0.0, max_value=1.0, value=DEFAULT_TEMPERATURE,
                                       help=TEMPERATURE_HELP)
     # MAIN (non-sidebar) VIEW
+    collection = st.selectbox("Select a collection to query", options=collection_names, index=1)
     query = st.text_input("Enter your question or query")
     
-    if query:
-        #tbl = lancedb.connect(CLOUD_DB_URI, api_key=LANCEDB_API_KEY).open_table("document_chunks")
-        tbl = lancedb.connect(CLOUD_DB_URI).open_table(db_tbl)
+    if query and collection:
+        db_tblname = [tn for tn in db_tbl_names if tn.startswith(collection)][0]
+        tbl = lancedb.connect(CLOUD_DB_URI).open_table(db_tblname)
         st.write(f"QUERY ({ts()}): '{query}'")
         retrieved_chunks = get_most_relevant_chunks(tbl, 
                                                     query, 
