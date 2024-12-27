@@ -1,34 +1,40 @@
-from typing import List, Tuple
+import re
 
 from openai import OpenAI
 from openai.types.chat import ChatCompletionUserMessageParam
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 from schemas import RetrievedDocChunk
 
+#class QuotedSection(BaseModel):
+#    quote_and_pgnum: str = Field(..., description="A relevant quote from the source text")
 
-class QuotedSection(BaseModel):
-    quote: str = Field(..., description="A relevant quote from the source text")
-    section_title: str = Field(..., description="The section title where this quote was found")
-
-class NarrativeResponse(BaseModel):
+class Reader9000Response(BaseModel):
     content: str = Field(
         ..., 
         description="""A cohesive narrative response that naturally incorporates quoted material 
-                   using phrases like 'According to...', 'As stated in...', etc. Quotes should be 
-                   wrapped in quotation marks and followed by section references in parentheses."""
+                   using phrases like 'According to...', 'As stated in...', etc. 
+                   Quotes should be wrapped in "" quotation marks and followed by the quoted 
+                   DocumentChunk's pg_num_0idx attribute in square brackets, like this: 
+                   "According to personA, the reason X happened was Y" [page: pg_num_0idx]."""
     )
-    quotes: List[QuotedSection] = Field(
-        ..., 
-        description="List of all quotes used in the narrative, in order of appearance"
-    )
+
+    @field_validator('content')
+    def validate_quote_format(cls, v):
+        pattern = r'(\".*?\")\s*\[page:\s*(\d+)\]'
+        if not re.search(pattern, v):
+            raise ValueError("Response must contain >=1 properly formatted quote with page number")
+        return v
+    
+    # BUG: NEED ANOTEHR VALIDATOR THAT THE QUOTE IS ACTUALLY A SUBSTRING OF THE SOURCE
+
 
 def generate_response(
     query: str, 
     context_passages: list[RetrievedDocChunk],
     llm_name: str = "gpt-4o-mini",
     temperature: float = 0.0,
-) -> Tuple[str, str]:
+) -> str:
     """
     Generate a response using the provided LLM based on the query and retrieved context.
     
@@ -88,9 +94,9 @@ def generate_response(
         model=llm_name,
         messages=messages,
         temperature=temperature,
-        response_format=NarrativeResponse
+        response_format=Reader9000Response
     )
-
+    
     final_response = response.choices[0].message.parsed.content  # type: ignore
 
-    return (final_response, prompt)
+    return final_response

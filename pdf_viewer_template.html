@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>PDF.js Cached Viewer</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>    <style>
+        #pdf-container {
+            width: 100%;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .page-container {
+            margin-bottom: 20px;
+        }
+        canvas {
+            border: 1px solid black;
+            margin: 0 auto;
+            display: block;
+        }
+        #error-message {
+            color: red;
+            padding: 20px;
+            display: none;
+        }
+        #loading-message {
+            text-align: center;
+            color: #666;
+            padding: 10px;
+        }
+        #page-info {
+            text-align: center;
+            margin: 10px 0;
+            font-family: Arial, sans-serif;
+        }
+    </style>
+</head>
+<body>
+    <div id="error-message"></div>
+    <div id="loading-message"></div>
+    <div id="page-info"></div>
+    <div id="pdf-container"></div>
+
+    <script>
+        // Set workerSrc property to worker file location
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+        // Replace this URL with your R2 PDF URL
+        const pdfUrl = '<<<PDF_URL>>>';
+        
+        const INITIAL_PAGE = 299;
+        const SCALE = 1.5;
+        let pdfDoc = null;
+
+        // Create a loading message updater
+        function updateLoadingMessage(message) {
+            const loadingDiv = document.getElementById('loading-message');
+            loadingDiv.textContent = message;
+        }
+
+        // Function to render a single page
+    async function renderPage(pageNum) {
+        try {
+            const page = await pdfDoc.getPage(pageNum);
+            const viewport = page.getViewport({ scale: SCALE });
+
+            const pageContainer = document.createElement('div');
+            pageContainer.className = 'page-container';
+            pageContainer.id = `page-${pageNum}`;
+        
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d');
+            canvas.height = viewport.height;
+            canvas.width = viewport.width;
+
+            pageContainer.appendChild(canvas);
+        
+            const pageLabel = document.createElement('div');
+            pageLabel.textContent = `Page ${pageNum}`;
+            pageLabel.style.textAlign = 'center';
+            pageLabel.style.marginTop = '10px';
+            pageContainer.appendChild(pageLabel);
+
+            // Add all pages to container, not just initial page
+            const container = document.getElementById('pdf-container');
+            container.appendChild(pageContainer);
+
+            const renderContext = {
+                canvasContext: context,
+                viewport: viewport
+            };
+        
+            await page.render(renderContext).promise;
+            return pageContainer;
+        
+        } catch (error) {
+            console.error(`Error rendering page ${pageNum}:`, error);
+            return null;
+        }
+    }
+
+        // Function to scroll to initial page
+        function scrollToInitialPage() {
+            const initialPageElement = document.getElementById(`page-${INITIAL_PAGE}`);
+            if (initialPageElement) {
+                initialPageElement.scrollIntoView({ behavior: 'auto', block: 'start' });
+            }
+        }
+
+        // Function to render all pages in specific order
+        async function renderAllPages() {
+            const container = document.getElementById('pdf-container');
+            container.innerHTML = '';
+            
+            // Phase 1: Render initial page immediately
+            updateLoadingMessage(`Rendering initial page ${INITIAL_PAGE}...`);
+            await renderPage(INITIAL_PAGE);
+            scrollToInitialPage();
+            
+            // Phase 2: Render a window of pages around the initial page (e.g., ±5 pages)
+            const windowSize = 5;
+            const promises = [];
+            
+            for (let offset = 1; offset <= windowSize; offset++) {
+                if (INITIAL_PAGE - offset >= 1) {
+                    promises.push(renderPage(INITIAL_PAGE - offset));
+                }
+                if (INITIAL_PAGE + offset <= pdfDoc.numPages) {
+                    promises.push(renderPage(INITIAL_PAGE + offset));
+                }
+            }
+            await Promise.all(promises);
+            
+            // Phase 3: Render remaining pages in background
+            // Start two concurrent loops - one going up, one going down
+            const remainingPromises = [];
+            
+            for (let pageNum = INITIAL_PAGE - windowSize - 1; pageNum >= 1; pageNum--) {
+                remainingPromises.push(renderPage(pageNum));
+            }
+            
+            for (let pageNum = INITIAL_PAGE + windowSize + 1; pageNum <= pdfDoc.numPages; pageNum++) {
+                remainingPromises.push(renderPage(pageNum));
+            }
+            
+            await Promise.all(remainingPromises);
+            updateLoadingMessage('All pages rendered. You can now scroll through the document.');
+        }
+        // Function to fetch and cache PDF
+        async function fetchAndCachePDF() {
+            const cache = await caches.open('pdf-cache');
+            let response = await cache.match(pdfUrl);
+            
+            if (!response) {
+                updateLoadingMessage('Downloading PDF...');
+                response = await fetch(pdfUrl);
+                const responseClone = response.clone();
+                await cache.put(pdfUrl, responseClone);
+                updateLoadingMessage('PDF cached for future use');
+            } else {
+                updateLoadingMessage('Loading PDF from cache...');
+            }
+            
+            return response;
+        }
+
+        // Main execution
+        async function init() {
+            try {
+                // Fetch PDF (from cache if available)
+                const response = await fetchAndCachePDF();
+                const data = await response.arrayBuffer();
+                
+                // Load the PDF
+                pdfDoc = await pdfjsLib.getDocument({data}).promise;
+                updateLoadingMessage(`PDF loaded successfully. Total pages: ${pdfDoc.numPages}`);
+                
+                // Render pages in specific order
+                await renderAllPages();
+                
+            } catch (error) {
+                console.error('Error:', error);
+                const errorDiv = document.getElementById('error-message');
+                errorDiv.style.display = 'block';
+                errorDiv.textContent = 'Error loading PDF: ' + error.message;
+                updateLoadingMessage('');
+            }
+        }
+
+        // Start the initialization
+        init();
+
+        // Add an extra scroll attempt after a short delay
+        setTimeout(scrollToInitialPage, 1000);
+    </script>
+</body>
+</html>
