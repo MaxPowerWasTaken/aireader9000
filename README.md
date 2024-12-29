@@ -20,7 +20,7 @@ If you want to add a required library to the project, you can add it manually to
 ## Deploying the streamlit app Locally
 To run the streamlit app locally, run the following command:
 ```bash
-PYTHONPATH=. streamlit run app.py
+PYTHONPATH=. streamlit run home.py
 ```
 
 ## Updating the Deployed Streamlit App Online
