@@ -1,10 +1,6 @@
-from datetime import datetime
-from zoneinfo import ZoneInfo
 
 import lancedb
-import pymupdf as fitz
 import streamlit as st
-import streamlit.components.v1 as components
 
 from config import (
     CLOUD_DB_URI,
@@ -17,49 +13,15 @@ from config import (
     rr_options,
 )
 from generate_llm_response import generate_response
-from index_docs import index_doc_to_cloud_db
+from home import ts
 from retrieval import get_most_relevant_chunks
 from ui_element_long_strings import (
-    COLLECTION_HELP,
     NUM_RESULTS_RETRIEVED_HELP,
     NUM_RESULTS_TO_LLM_HELP,
     SELECTED_LLM_MODEL_HELP,
     SELECTED_RERANKER_HELP,
     TEMPERATURE_HELP,
 )
-
-BUCKET_URL = "https://pub-ec8aa50844b34a22a2e6132f8251f8b5.r2.dev"
-
-def upload_pdf_to_bucket(uploaded_file, BUCKET_URL, collection, doc_name):
-    # upload uploaded_file to R2 location at: BUCKET_URL/collection/doc_name
-    pass
-
-
-def ts()->str:
-    return datetime.now(tz=ZoneInfo('America/Chicago')).strftime('%I:%M:%S %p')
-
-def upload_view():
-    st.header("Upload Mode")
-    uploaded_file = st.file_uploader("Upload a Document to Query", type="pdf")
-    if uploaded_file is not None:
-        try:
-            pdf_document = fitz.open(stream=uploaded_file.read(), filetype="pdf")
-            doc_name = st.text_input("Enter a name for this document:")
-            collection = st.text_input("Enter a name for the collection this document goes in",
-                                       help=COLLECTION_HELP,
-                                       value=doc_name)
-
-            # Process the doc once user enters a doc- and collection-name, and hits button
-            if st.button("Process Document"):
-                if not doc_name or not collection:
-                    st.error("Please enter a name for the document and the collection it goes in.")
-
-                upload_pdf_to_bucket(uploaded_file, BUCKET_URL, collection, doc_name)
-                index_doc_to_cloud_db(pdf_document, doc_title=doc_name)
-                st.write(f"{ts()} Successfully indexed document: {doc_name}")
-
-        except Exception as e:
-            st.error(e)
 
 
 def query_view():
@@ -120,49 +82,8 @@ def query_view():
                                             llm_name=selected_llm_model,
                                             temperature=temperature,
                                             )
-        
-        doc_name = retrieved_chunks[0].doc_name
+
         st.write(f"ANSWER ({ts()}): '{narrative_response}'")
-        if st.button("See Source"):
-            st.session_state.active_tab = "See Quotes/Citations in Doc"
-            st.session_state.doc_name = doc_name
+        st.page_link(page='pages/view_source_doc.py', label='***view quote in source doc***', )
 
-
-def generate_pdf_viewer(html_template_file: str, pdf_url: str) -> str:
-    with open(html_template_file, 'r') as file:
-        template = file.read()
-    
-    # Replace the hardcoded URL with the dynamic one
-    html_content = template.replace(
-        "const pdfUrl = '<<<PDF_URL>>>';",
-        f"const pdfUrl = '{pdf_url}';"
-    )
-
-    with open("pdf_viewer_final_output.html", 'w') as file:
-        file.write(html_content)
-    
-    return html_content
-
-def main()->None:
-    st.title("Welcome to AI Reader 9000")
-    
-    # Create tabs for main mode selection
-    tab_names = ["📄 Upload Documents", "🔍 Query Documents", "See Quotes/Citations in Doc"]
-    tab1, tab2, tab3 = st.tabs(tab_names)
-    
-    with tab1:
-        upload_view()
-    
-    with tab2:
-        query_view()
-    
-    with tab3:
-        if hasattr(st.session_state, 'doc_name'):
-            pdf_url = f"{BUCKET_URL}/{st.session_state.doc_name}"
-            pdf_viewer_html = generate_pdf_viewer("pdf_viewer_template.html", pdf_url)
-            components.html(pdf_viewer_html, height=800)
-            # BUG: frontend is trying to load {BUCKET_URL}/j6c_final_rpt.pdf but
-            #      whats actually saved at the bucket location is called FINAL_REPORT.pdf
-
-if __name__ == "__main__":
-    main()
+query_view()

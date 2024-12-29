@@ -4,6 +4,7 @@ import torch
 from lancedb.embeddings import get_registry
 
 # Constants
+BUCKET_URL = "https://pub-ec8aa50844b34a22a2e6132f8251f8b5.r2.dev"
 EMBEDDER = ("sentence-transformers", "BAAI/bge-small-en-v1.5")
 TEXT_CLEANING_MODEL = "gemini/gemini-1.5-flash"
 CLOUD_DB_URI = "db://askliz-doc-db-8qjgop" # "db://aireader9000-rlei9n"
