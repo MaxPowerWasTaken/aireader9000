@@ -2,6 +2,7 @@
 import lancedb
 import streamlit as st
 
+from app import ts
 from config import (
     CLOUD_DB_URI,
     DEFAULT_FINAL_LLM_MODEL,
@@ -13,7 +14,6 @@ from config import (
     rr_options,
 )
 from generate_llm_response import generate_response
-from home import ts
 from retrieval import get_most_relevant_chunks
 from ui_element_long_strings import (
     NUM_RESULTS_RETRIEVED_HELP,

@@ -2,8 +2,8 @@
 import pymupdf as fitz
 import streamlit as st
 
+from app import ts
 from config import BUCKET_URL
-from home import ts
 from index_docs import index_doc_to_cloud_db
 from ui_element_long_strings import COLLECTION_HELP
 
